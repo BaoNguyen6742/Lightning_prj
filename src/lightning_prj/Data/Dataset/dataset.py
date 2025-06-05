@@ -89,3 +89,14 @@ class FoodDataModule(ptl.LightningDataModule):
             num_workers=self.config.NUM_WORKERS,
             pin_memory=True,
         )
+
+
+if __name__ == "__main__":
+    # Example usage
+    data_module = FoodDataModule()
+    data_module.setup("fit")
+    train_loader = data_module.train_dataloader()
+    
+    for images, labels in train_loader:
+        print(images.shape, labels)
+        break  # Just to test the first batch

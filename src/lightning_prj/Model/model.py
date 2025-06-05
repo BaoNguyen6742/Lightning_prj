@@ -1,7 +1,8 @@
 import einops
 import lightning as ptl
 import torch.nn as nn
-from torch.optim import AdamW
+from torch.optim import Adam
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
 from ..Config.config import HYPER_PARAMS
 
@@ -17,28 +18,30 @@ class Model(ptl.LightningModule):
     def forward(self, x):
         return self.model(x)
 
+    def configure_optimizers(self):
+        optimizer = Adam(self.parameters(), lr=self.lr)
+        scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=2, T_mult=2)
+        return [optimizer], [scheduler]
+
     def training_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self.forward(x)
         loss = self.loss_fn(y_hat, y)
-        self.log("train_loss", loss, on_step=True, prog_bar=True)
+        self.log("train_loss", loss, on_step=True, on_epoch=True)
         return loss
-
-    def configure_optimizers(self):
-        return AdamW(self.parameters(), lr=1e-3)
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self.forward(x)
         loss = self.loss_fn(y_hat, y)
-        self.log("val_loss", loss, on_step=True, prog_bar=True)
+        self.log("val_loss", loss, on_step=True, on_epoch=True)
         return loss
 
     def test_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self.forward(x)
         loss = self.loss_fn(y_hat, y)
-        self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("test_loss", loss, on_step=True, on_epoch=True)
         return loss
 
 
